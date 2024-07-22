@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Proyek PKL SMK Mahardhika</title>
+  <link rel="icon" href="{{ url_for('static', filename='pkl.png') }}" type="image/png">
+  <style>
+    body {
+      background-color: #f0f0f0;
+      margin: 0;
+      font-family: sans-serif;
+    }
+
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 80vh;
+    }
+
+    .content {
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      color: #000000;
+      font-family: 'Brush Script MT', cursive;
+      text-shadow: 2px 2px 2px #4edaf3;
+    }
+
+    input[type="file"], input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 1rem;
+    }
+
+    button {
+      background-color: #007bff;
+      color: #fff;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.8rem;
+      color: #777;
+    }
+
+    .background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url("{{ url_for('static', filename='pkl.png') }}");
+      background-size: cover;
+      background-position: center;
+      filter: blur(10px);
+      z-index: -1;
+    }
+
+    .txt {
+      text-align: center;
+    }
+   .hahah{
+    font-style: oblique;
+    font-weight: bold;
+    font-family: 'Brush Script MT', cursive;
+    text-shadow: 2px 2px 2px #4edaf3;
+    font-size: 1rem;
+   }
+  </style>
+</head>
+<body>
+  <div class="background"></div>
+  <div class="container">
+    <div class="content">
+      <h1>Membuat Sertifikat Dari Excel</h1>
+      <form action="/generate-certificates" method="post" enctype="multipart/form-data">
+        <input type="file" name="excel" id="input" accept=".xlsx, .xls">
+        <button type="submit">Unggah Dan Unduh Sertifikat Dari Excel</button>
+      </form>
+      <div class="footer">
+        Copyright ©2024, BBPMP Provinsi Jawa Barat
+      </div>
+    </div>
+  </div>
+  <div class="hahah">
+  <marquee width="100%" direction="right" height="50px" style="padding-top: 20px; " >
+    Website ini dibuat oleh siswa Mahardhika di Tim Kerja 2: Publikasi dan Komunikasi. 
+  </marquee>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script>
+    let data = [];
+    let currentPage = 1;
+    const itemsPerPage = 10;
+
+    document.getElementById('input').addEventListener('change', handleFile);
+
+    function handleFile(event) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      
+      reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, {type: 'array'});
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json(worksheet);
+        
+        window.data = json.map((item, index) => ({
+          no: index + 1,
+          nama: item.Name,  
+          instansi: item.Instansi,  
+          tema: item['Tema Webinar'],  
+          sertifikat: `<a href="#">Download</a>`,  
+          materi: 'Tidak Ada Materi'
+        }));
+        
+        renderTable(window.data, 1);
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+
+    function renderTable(data, page) {
+      const tableBody = document.getElementById('table-body');
+      tableBody.innerHTML = '';
+
+      const start = (page - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+      const paginatedData = data.slice(start, end);
+
+      if (paginatedData.length > 0) {
+        paginatedData.forEach((item) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${item.no}</td>
+            <td>${item.nama}</td>
+            <td>${item.instansi}</td>
+            <td>${item.tema}</td>
+            <td>${item.sertifikat}</td>
+            <td>${item.materi}</td>
+          `;
+          tableBody.appendChild(row);
+        });
+      } else {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td colspan="6" class="txt">No data available in table</td>`;
+        tableBody.appendChild(row);
+      }
+    }
+  </script>
+  
+</body>
+</html>
