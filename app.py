@@ -10,18 +10,18 @@ app = Flask(__name__)
 def index():
     return render_template('index.html')
 
-@app.route('/PKL_web')
-def web_pkl():
-    return render_template('PKL_web.html')
-
 @app.route('/generate-certificates', methods=['POST'])
 def generate_certificates():
     file = request.files['excel']
-    df = pd.read_excel(file)
-    df = pd.read_excel(file, engine='openpyxl')
+    try:
+        df = pd.read_excel(file, engine='openpyxl')  # Use 'openpyxl' engine for Excel files
+    except Exception as e:
+        return f"Error reading Excel file: {e}"
+
     certificates = []
 
-    for name in df['Name']:  # Assuming the column with names is labeled 'Name'
+    for index, row in df.iterrows():
+        name = row['Name']  # Assuming the column with names is labeled 'Name'
         img = Image.open("static/images.png")  # Path to the uploaded certificate template
         draw = ImageDraw.Draw(img)
         
@@ -33,7 +33,7 @@ def generate_certificates():
         text_width = text_bbox[2] - text_bbox[0]
         text_height = text_bbox[3] - text_bbox[1]
         x = (img.width - text_width) / 2
-        y = 740 # Adjust this value based on where you want the name to appear
+        y = 740  # Adjust this value based on where you want the name to appear
         
         # Add text to image
         draw.text((x, y), name, font=font, fill="black")
