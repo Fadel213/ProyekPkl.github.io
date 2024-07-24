@@ -50,6 +50,7 @@
       border-radius: 5px;
       font-size: 1rem;
       cursor: pointer;
+      margin-top: 10px;
     }
 
     .footer {
@@ -75,13 +76,14 @@
     .txt {
       text-align: center;
     }
-   .hahah{
-    font-style: oblique;
-    font-weight: bold;
-    font-family: 'Brush Script MT', cursive;
-    text-shadow: 2px 2px 2px #4edaf3;
-    font-size: 1rem;
-   }
+    
+    .hahah {
+      font-style: oblique;
+      font-weight: bold;
+      font-family: 'Brush Script MT', cursive;
+      text-shadow: 2px 2px 2px #4edaf3;
+      font-size: 1rem;
+    }
   </style>
 </head>
 <body>
@@ -93,15 +95,16 @@
         <input type="file" name="excel" id="input" accept=".xlsx, .xls">
         <button type="submit">Unggah Dan Unduh Sertifikat Dari Excel</button>
       </form>
+      <button onclick="window.location.href='/PKL_web'">Ke Halaman web_pkl</button> <!-- Button to redirect to web_pkl.html -->
       <div class="footer">
         Copyright ©2024, BBPMP Provinsi Jawa Barat
       </div>
     </div>
   </div>
   <div class="hahah">
-  <marquee width="100%" direction="right" height="50px" style="padding-top: 20px; " >
-    Website ini dibuat oleh siswa Mahardhika di Tim Kerja 2: Publikasi dan Komunikasi. 
-  </marquee>
+    <marquee width="100%" direction="right" height="50px" style="padding-top: 20px;">
+      Website ini dibuat oleh siswa Mahardhika di Tim Kerja 2: Publikasi dan Komunikasi.
+    </marquee>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -166,6 +169,5 @@
       }
     }
   </script>
-  
 </body>
 </html>
