@@ -10,6 +10,10 @@ app = Flask(__name__)
 def index():
     return render_template('index.html')
 
+@app.route('/PKL_web')
+def web_pkl():
+    return render_template('PKL_web.html')
+
 @app.route('/generate-certificates', methods=['POST'])
 def generate_certificates():
     file = request.files['excel']
