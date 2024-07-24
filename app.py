@@ -18,7 +18,8 @@ def web_pkl():
 def generate_certificates():
     file = request.files['excel']
     df = pd.read_excel(file)
-
+    df = pd.read_excel(file, engine='openpyxl')
+    df = pd.read_excel(file, engine='xlrd') 
     certificates = []
 
     for name in df['Name']:  # Assuming the column with names is labeled 'Name'
