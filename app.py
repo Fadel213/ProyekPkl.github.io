@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 # Route for serving the main page
 @app.route('/')
-def index():
+def PKL_web():
     return render_template('PKl_web.html')
 
 # Route to fetch Excel data
