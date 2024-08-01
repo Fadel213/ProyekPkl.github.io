@@ -1,20 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Sertifikat Kegiatan</title>
-  <link rel="icon" href="static/pkl.png" type="image/png">
+  <title>Proyek PKL SMK Mahardhika</title>
+  <link rel="icon" href="{{ url_for('static', filename='pkl.png') }}" type="image/png">
   <style>
     body {
       background-color: #f0f0f0;
       margin: 0;
       font-family: sans-serif;
     }
+
     .container {
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 93vh;
+      height: 80vh;
     }
+
     .content {
       background-color: #ffffff;
       padding: 30px;
@@ -22,17 +24,16 @@
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
       text-align: center;
     }
+
     h1 {
       font-size: 2.5rem;
       margin-bottom: 20px;
       color: #000000;
+      font-family: 'Brush Script MT', cursive;
+      text-shadow: 2px 2px 2px #4edaf3;
     }
-    h2 {
-      font-size: 1.5rem;
-      margin-bottom: 10px;
-      color: #000000;
-    }
-    input[type="text"] {
+
+    input[type="file"], input[type="text"] {
       width: 100%;
       padding: 10px;
       margin: 10px 0;
@@ -40,6 +41,7 @@
       border-radius: 5px;
       font-size: 1rem;
     }
+
     button {
       background-color: #007bff;
       color: #fff;
@@ -48,53 +50,39 @@
       border-radius: 5px;
       font-size: 1rem;
       cursor: pointer;
+      margin-top: 10px;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-    th, td {
-      text-align: left;
-      padding: 8px;
-      border-bottom: 1px solid #ddd;
-    }
-    th {
-      background-color: #f2f2f2;
-    }
-    .pagination {
-      display: flex;
-      justify-content: center;
-      margin-top: 20px;
-    }
-    .pagination button {
-      margin: 0 5px;
-    }
+
     .footer {
       text-align: center;
       margin-top: 20px;
       font-size: 0.8rem;
       color: #777;
     }
+
     .background {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background-image: url(static/pkl.png);
+      background-image: url("{{ url_for('static', filename='pkl.png') }}");
       background-size: cover;
       background-position: center;
       filter: blur(10px);
       z-index: -1;
     }
+
     .txt {
       text-align: center;
     }
-    .hahah{
-    font-style: oblique;
-    font-weight: bold;
-    font-size: 1rem;
+    
+    .hahah {
+      font-style: oblique;
+      font-weight: bold;
+      font-family: 'Brush Script MT', cursive;
+      text-shadow: 2px 2px 2px #4edaf3;
+      font-size: 1rem;
     }
   </style>
 </head>
@@ -102,93 +90,57 @@
   <div class="background"></div>
   <div class="container">
     <div class="content">
-      <h1>SERTIFIKAT KEGIATAN</h1>
-      <h2>Cari Peserta Webinar</h2>
-      <input type="text" id="search-input" placeholder="Masukkan Nama Anda Sesuai Dengan Yang Didaftarkan">
-      <button onclick="search()">Cari</button>
-    
-
-      <table id="table-data">
-        <thead>
-          <tr>
-            <th>NO</th>
-            <th>NAMA</th>
-            <th>INSTANSI</th>
-            <th>TEMA WEBINAR</th>
-            <th>SERTIFIKAT</th>
-            <th>MATERI</th>
-          </tr>
-        </thead>
-        <tbody id="table-body">
-          <tr>
-            <td colspan="6" class="txt">No data available in table</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div class="pagination">
-        <button onclick="previousPage()">Previous</button>
-        <button onclick="nextPage()">Next</button>
-      </div>
-
+      <h1>Membuat Sertifikat Dari Excel</h1>
+      <form action="/generate-certificates" method="post" enctype="multipart/form-data">
+        <input type="file" name="excel" id="input" accept=".xlsx, .xls">
+        <button type="submit">Unggah Dan Unduh Sertifikat Dari Excel</button>
+      </form>
+      <button onclick="window.location.href='/PKL_web'">Ke Halaman web_pkl</button> <!-- Button to redirect to web_pkl.html -->
       <div class="footer">
         Copyright ©2024, BBPMP Provinsi Jawa Barat
       </div>
     </div>
   </div>
   <div class="hahah">
-  <marquee width="100%" direction="right" height="50px" style="padding-top: 20px; " >
-    Website ini dibuat oleh siswa Mahardhika di Tim Kerja 2: Publikasi dan Komunikasi. 
-  </marquee>
+    <marquee width="100%" direction="right" height="50px" style="padding-top: 20px;">
+      Website ini dibuat oleh siswa Mahardhika di Tim Kerja 2: Publikasi dan Komunikasi.
+    </marquee>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script>
     let data = [];
     let currentPage = 1;
     const itemsPerPage = 10;
-    let zip = new JSZip();
 
-    // Fetch data from the server
-    async function fetchData() {
-      const response = await fetch('/data/book1');
-      if (response.ok) {
-        data = await response.json();
-        fetchCertificates();
-      } else {
-        console.error('Failed to fetch data');
-      }
+    document.getElementById('input').addEventListener('change', handleFile);
+
+    function handleFile(event) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      
+      reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, {type: 'array'});
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json(worksheet);
+        
+        window.data = json.map((item, index) => ({
+          no: index + 1,
+          nama: item.Name,  
+          instansi: item.Instansi,  
+          tema: item['Tema Webinar'],  
+          sertifikat: `<a href="#">Download</a>`,  
+          materi: 'Tidak Ada Materi'
+        }));
+        
+        renderTable(window.data, 1);
+      };
+
+      reader.readAsArrayBuffer(file);
     }
 
-    // Fetch certificates from the ZIP file
-    async function fetchCertificates() {
-      const response = await fetch('static/certificates(3).zip');
-      if (response.ok) {
-        const blob = await response.blob();
-        zip.loadAsync(blob).then(() => {
-          data.forEach((item, index) => {
-            const certFilename = `certificate_${index + 1}.png`;
-            zip.file(certFilename).async('base64').then((base64) => {
-              item.certificate = `data:image/png;base64,${base64}`;
-              if (index === data.length - 1) {
-                renderTable(data, currentPage);
-              }
-            });
-          });
-        });
-      } else {
-        console.error('Failed to fetch certificates');
-      }
-    }
-
-    // Search function
-    function search() {
-      const searchValue = document.getElementById('search-input').value.toLowerCase();
-      const filteredData = data.filter(item => item.Name && item.Name.toLowerCase().includes(searchValue));
-      renderTable(filteredData, 1);
-    }
-
-    // Render table with pagination
     function renderTable(data, page) {
       const tableBody = document.getElementById('table-body');
       tableBody.innerHTML = '';
@@ -198,15 +150,15 @@
       const paginatedData = data.slice(start, end);
 
       if (paginatedData.length > 0) {
-        paginatedData.forEach((item, index) => {
+        paginatedData.forEach((item) => {
           const row = document.createElement('tr');
           row.innerHTML = `
-            <td>${start + index + 1}</td>
-            <td>${item.Name || ''}</td>
-            <td>${item.Instansi || ''}</td>
-            <td>${item['Tema Webinar'] || ''}</td>
-            <td><a href="${item.certificate}" download="certificate${start + index + 1}.png">Download</a></td>
-            <td>${item.Materi || 'Tidak Ada Materi'}</td>
+            <td>${item.no}</td>
+            <td>${item.nama}</td>
+            <td>${item.instansi}</td>
+            <td>${item.tema}</td>
+            <td>${item.sertifikat}</td>
+            <td>${item.materi}</td>
           `;
           tableBody.appendChild(row);
         });
@@ -216,29 +168,6 @@
         tableBody.appendChild(row);
       }
     }
-
-    // Pagination functions
-    function nextPage() {
-      currentPage++;
-      renderTable(data, currentPage);
-    }
-
-    function previousPage() {
-      if (currentPage > 1) {
-        currentPage--;
-        renderTable(data, currentPage);
-      }
-    }
-
-    // Fetch data on load
-    fetchData();
-
-    // Search on enter key press
-    document.getElementById('search-input').addEventListener('keydown', function(event) {
-      if (event.key === 'Enter') {
-        search();
-      }
-    });
   </script>
 </body>
 </html>
