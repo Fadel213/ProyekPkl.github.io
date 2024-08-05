@@ -3,6 +3,7 @@
 <head>
   <title>Sertifikat Kegiatan</title>
   <link rel="icon" href="static/pkl.png" type="image/png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       background-color: #f0f0f0;
@@ -14,16 +15,19 @@
       justify-content: center;
       align-items: center;
       height: 93vh;
+      padding: 10px;
     }
     .content {
       background-color: #ffffff;
-      padding: 30px;
+      padding: 20px;
       border-radius: 10px;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
       text-align: center;
+      width: 100%;
+      max-width: 600px;
     }
     h1 {
-      font-size: 2.5rem;
+      font-size: 2rem;
       margin-bottom: 20px;
       color: #000000;
     }
@@ -53,6 +57,7 @@
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
+      font-size: 0.9rem;
     }
     th, td {
       text-align: left;
@@ -91,10 +96,49 @@
     .txt {
       text-align: center;
     }
-    .hahah{
-    font-style: oblique;
-    font-weight: bold;
-    font-size: 1rem;
+    .hahah {
+      font-style: oblique;
+      font-weight: bold;
+      font-size: 1rem;
+    }
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 1.5rem;
+      }
+      h2 {
+        font-size: 1.2rem;
+      }
+      input[type="text"] {
+        font-size: 0.9rem;
+      }
+      button {
+        font-size: 0.9rem;
+        padding: 8px 16px;
+      }
+      table {
+        font-size: 0.8rem;
+      }
+    }
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 1.2rem;
+      }
+      h2 {
+        font-size: 1rem;
+      }
+      input[type="text"] {
+        font-size: 0.8rem;
+      }
+      button {
+        font-size: 0.8rem;
+        padding: 6px 12px;
+      }
+      table {
+        font-size: 0.7rem;
+      }
+      th, td {
+        padding: 6px;
+      }
     }
   </style>
 </head>
@@ -104,17 +148,17 @@
     <div class="content">
       <h1>SERTIFIKAT KEGIATAN</h1>
       <h2>Cari Peserta Webinar</h2>
-      <input type="text" id="search-input" placeholder="Masukkan Nama Anda Sesuai Dengan Yang Didaftarkan">
+      <input type="text" id="search-name" placeholder="Masukkan Nama Peserta">
+      <input type="text" id="search-nuptk" placeholder="Masukkan NUPTK (Hanya angka)">
       <button onclick="search()">Cari</button>
     
-
       <table id="table-data">
         <thead>
           <tr>
             <th>NO</th>
             <th>NAMA</th>
+            <th>NIP/NUPTK</th>
             <th>INSTANSI</th>
-            <th>TEMA WEBINAR</th>
             <th>SERTIFIKAT</th>
             <th>MATERI</th>
           </tr>
@@ -137,9 +181,9 @@
     </div>
   </div>
   <div class="hahah">
-  <marquee width="100%" direction="right" height="50px" style="padding-top: 20px; " >
-    Website ini dibuat oleh siswa Mahardhika di Tim Kerja 2: Publikasi dan Komunikasi. 
-  </marquee>
+    <marquee width="100%" direction="right" height="50px" style="padding-top: 20px;">
+      Website ini dibuat oleh siswa Mahardhika di Tim Kerja 2: Publikasi dan Komunikasi. 
+    </marquee>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
@@ -151,42 +195,77 @@
 
     // Fetch data from the server
     async function fetchData() {
-      const response = await fetch('/data/book1');
-      if (response.ok) {
-        data = await response.json();
-        fetchCertificates();
-      } else {
-        console.error('Failed to fetch data');
+      try {
+        const response = await fetch('/data/book1');
+        if (response.ok) {
+          data = await response.json();
+          console.log('Data fetched:', data); // Log fetched data
+          await fetchCertificates();
+        } else {
+          console.error('Failed to fetch data');
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
       }
     }
 
     // Fetch certificates from the ZIP file
     async function fetchCertificates() {
-      const response = await fetch('static/certificates(3).zip');
-      if (response.ok) {
-        const blob = await response.blob();
-        zip.loadAsync(blob).then(() => {
-          data.forEach((item, index) => {
+      try {
+        const response = await fetch('static/certificates(3).zip');
+        if (response.ok) {
+          const blob = await response.blob();
+          await zip.loadAsync(blob);
+
+          for (let index = 0; index < data.length; index++) {
             const certFilename = `certificate_${index + 1}.png`;
-            zip.file(certFilename).async('base64').then((base64) => {
-              item.certificate = `data:image/png;base64,${base64}`;
-              if (index === data.length - 1) {
-                renderTable(data, currentPage);
-              }
-            });
-          });
-        });
-      } else {
-        console.error('Failed to fetch certificates');
+            const base64 = await zip.file(certFilename).async('base64');
+            data[index].certificate = `data:image/png;base64,${base64}`;
+          }
+
+          console.log('Certificates fetched for all items'); // Log when all certificates are fetched
+        } else {
+          console.error('Failed to fetch certificates');
+        }
+      } catch (error) {
+        console.error('Error fetching certificates:', error);
       }
     }
 
     // Search function
     function search() {
-      const searchValue = document.getElementById('search-input').value.toLowerCase();
-      const filteredData = data.filter(item => item.Name && item.Name.toLowerCase().includes(searchValue));
-      renderTable(filteredData, 1);
+  const nameValue = document.getElementById('search-name').value.toLowerCase();
+  const nuptkValue = document.getElementById('search-nuptk').value.trim();
+  console.log('Search name value:', nameValue); // Log search name value
+  console.log('Search NUPTK value:', nuptkValue); // Log search NUPTK value
+
+  let filteredData = data;
+
+  if (nameValue) {
+    // Filter data based on name
+    filteredData = filteredData.filter(item => {
+      return item.Name && item.Name.toLowerCase().includes(nameValue);
+    });
+  }
+
+  if (nuptkValue) {
+    // Validate and filter data based on NUPTK
+    if (/^\d+$/.test(nuptkValue)) {
+      filteredData = filteredData.filter(item => {
+        // Convert NIP_NUPTK to string if it's not already a string
+        const nipNuptk = item.NIP_NUPTK ? item.NIP_NUPTK.toString() : '';
+        return nipNuptk.includes(nuptkValue);
+      });
+    } else {
+      console.error('Invalid NUPTK format'); // Log invalid NUPTK format
+      filteredData = []; // Clear the filtered data if NUPTK is invalid
     }
+  }
+
+  console.log('Filtered data:', filteredData); // Log filtered data
+  renderTable(filteredData, 1);
+}
+
 
     // Render table with pagination
     function renderTable(data, page) {
@@ -203,8 +282,8 @@
           row.innerHTML = `
             <td>${start + index + 1}</td>
             <td>${item.Name || ''}</td>
+            <td>${item.NIP_NUPTK || ''}</td>
             <td>${item.Instansi || ''}</td>
-            <td>${item['Tema Webinar'] || ''}</td>
             <td><a href="${item.certificate}" download="certificate${start + index + 1}.png">Download</a></td>
             <td>${item.Materi || 'Tidak Ada Materi'}</td>
           `;
@@ -234,7 +313,13 @@
     fetchData();
 
     // Search on enter key press
-    document.getElementById('search-input').addEventListener('keydown', function(event) {
+    document.getElementById('search-name').addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        search();
+      }
+    });
+
+    document.getElementById('search-nuptk').addEventListener('keydown', function(event) {
       if (event.key === 'Enter') {
         search();
       }
