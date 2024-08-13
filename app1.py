@@ -1,54 +1,66 @@
-from flask import Flask, request, send_file, render_template
+from flask import Flask, render_template, send_file, jsonify
+import mysql.connector
 from io import BytesIO
 import pandas as pd
-from PIL import Image, ImageDraw, ImageFont
-import zipfile
 
 app = Flask(__name__)
 
+# Database connection details
+DB_CONFIG = {
+    'host': 'x-e.h.filess.io',
+    'database': 'sertifikat_cheesemood',
+    'user': 'sertifikat_cheesemood',
+    'password': 'a3d775699a18566273a5f5072be7c09d96f29b6c',
+    'port': 3305
+}
+
+def get_db_connection():
+    connection = mysql.connector.connect(**DB_CONFIG)
+    return connection
+
+# Route for serving the main page
 @app.route('/')
-def PKL_web():
+def index():
     return render_template('PKL_web.html')
 
-@app.route('/generate-certificates', methods=['POST'])
-def generate_certificates():
-    file = request.files['excel']
-    df = pd.read_excel(file)
+# Route to fetch Excel data from the database
+@app.route('/data/book1')
+def get_data():
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    query = "SELECT filedata FROM files WHERE name = 'excel' AND filename = 'Book1.xlsx'"
+    cursor.execute(query)
+    result = cursor.fetchone()
+    cursor.close()
+    connection.close()
+    
+    if result:
+        excel_data = BytesIO(result['filedata'])
+        try:
+            df = pd.read_excel(excel_data)
+            data = df.to_dict(orient='records')
+            return jsonify(data)
+        except Exception as e:
+            return jsonify({'error': f'Error processing Excel file: {str(e)}'}), 500
+    else:
+        return jsonify({'error': 'File not found'}), 404
 
-    certificates = []
-
-    for name in df['Name']:  # Assuming the column with names is labeled 'Name'
-        img = Image.open("static/images.png")  # Path to the uploaded certificate template
-        draw = ImageDraw.Draw(img)
-        
-        # Define the font and size
-        font = ImageFont.truetype("arial.ttf", 80)  # Adjust the font path and size as needed
-        
-        # Calculate text position
-        text_bbox = font.getbbox(name)
-        text_width = text_bbox[2] - text_bbox[0]
-        text_height = text_bbox[3] - text_bbox[1]
-        x = (img.width - text_width) / 2
-        y = 740 # Adjust this value based on where you want the name to appear
-        
-        # Add text to image
-        draw.text((x, y), name, font=font, fill="black")
-        
-        # Save to buffer
-        buffer = BytesIO()
-        img.save(buffer, format="PNG")
-        buffer.seek(0)
-        
-        certificates.append(buffer)
-
-    # Create a ZIP file containing all certificates
-    zip_buffer = BytesIO()
-    with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
-        for idx, cert_buffer in enumerate(certificates):
-            zip_file.writestr(f'certificate_{idx + 1}.png', cert_buffer.getvalue())
-    zip_buffer.seek(0)
-
-    return send_file(zip_buffer, mimetype='application/zip', download_name='certificates.zip', as_attachment=True)
+# Route for serving certificate files from the database
+@app.route('/data/<path:filename>')
+def data(filename):
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    query = "SELECT filedata FROM files WHERE filename = %s AND name = 'certificate'"
+    cursor.execute(query, (filename,))
+    result = cursor.fetchone()
+    cursor.close()
+    connection.close()
+    
+    if result:
+        file_data = BytesIO(result['filedata'])
+        return send_file(file_data, as_attachment=True, attachment_filename=filename)
+    else:
+        return jsonify({'error': 'File not found'}), 404
 
 if __name__ == '__main__':
     app.run(debug=True)
